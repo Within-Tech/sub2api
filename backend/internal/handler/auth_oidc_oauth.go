@@ -462,7 +462,7 @@ func (h *AuthHandler) OIDCOAuthCallback(c *gin.Context) {
 	// A validated OIDC subject can identify a new account without a mailbox.
 	// Use only the reserved address derived from issuer + subject, never an
 	// upstream or browser-supplied email, and retain all local signup gates.
-	if oidcSubjectSignupAllowed(cfg, compatEmail,
+	if h.authService != nil && h.settingSvc != nil && oidcSubjectSignupAllowed(cfg, compatEmail,
 		h.authService.IsEmailVerifyEnabled(c.Request.Context()),
 		h.isForceEmailOnThirdPartySignup(c.Request.Context()),
 		h.settingSvc.IsInvitationCodeEnabled(c.Request.Context())) {
