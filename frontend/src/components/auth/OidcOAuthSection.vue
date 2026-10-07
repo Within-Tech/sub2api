@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <button type="button" :disabled="disabled" class="btn btn-secondary w-full" @click="startLogin">
+    <button type="button" :disabled="disabled" class="btn w-full" :class="primary ? 'btn-primary' : 'btn-secondary'" @click="startLogin">
       <span
         class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
       >
@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<{
   affCode?: string
   providerName?: string
   showDivider?: boolean
+  primary?: boolean
 }>(), {
   providerName: 'OIDC',
   showDivider: true

@@ -218,6 +218,7 @@ export default {
 
   // Auth
   auth: {
+    useAccountPasswordLogin: 'Use account/password login',
     welcomeBack: 'Welcome Back',
     signInToAccount: 'Sign in to your account to continue',
     signIn: 'Sign In',
