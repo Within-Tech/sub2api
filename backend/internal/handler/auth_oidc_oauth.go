@@ -459,6 +459,37 @@ func (h *AuthHandler) OIDCOAuthCallback(c *gin.Context) {
 		}
 	}
 
+	// A validated OIDC subject can identify a new account without a mailbox.
+	// Use only the reserved address derived from issuer + subject, never an
+	// upstream or browser-supplied email, and retain all local signup gates.
+	if oidcSubjectSignupAllowed(cfg, compatEmail,
+		h.authService.IsEmailVerifyEnabled(c.Request.Context()),
+		h.isForceEmailOnThirdPartySignup(c.Request.Context()),
+		h.settingSvc.IsInvitationCodeEnabled(c.Request.Context())) {
+		if err := h.ensureBackendModeAllowsNewUserLogin(c.Request.Context()); err != nil {
+			redirectOAuthError(c, frontendCallback, "login_blocked", infraerrors.Reason(err), infraerrors.Message(err))
+			return
+		}
+		_, user, err := h.authService.LoginOrRegisterOAuthWithTokenPairAndPromoCode(
+			c.Request.Context(), email, username, "", "", readOAuthPromoCode(c), "oidc",
+		)
+		if err != nil {
+			redirectOAuthError(c, frontendCallback, "registration_failed", infraerrors.Reason(err), infraerrors.Message(err))
+			return
+		}
+		if err := h.createOAuthPendingSession(c, oauthPendingSessionPayload{
+			Intent: oauthIntentLogin, Identity: identityRef, TargetUserID: &user.ID,
+			ResolvedEmail: email, RedirectTo: redirectTo, BrowserSessionKey: browserSessionKey,
+			UpstreamIdentityClaims: upstreamClaims,
+			CompletionResponse:     map[string]any{"redirect": redirectTo},
+		}); err != nil {
+			redirectOAuthError(c, frontendCallback, "session_error", "failed to continue oauth login", "")
+			return
+		}
+		redirectToFrontendCallback(c, frontendCallback)
+		return
+	}
+
 	// 快捷路径：当上游返回已验证邮箱、部署不要求额外确认且本地没有同邮箱账号时，
 	// 直接信任上游身份完成注册/登录，避免展示 choice 页。
 	if compatEmailUser == nil &&
@@ -513,6 +544,11 @@ func (h *AuthHandler) OIDCOAuthCallback(c *gin.Context) {
 		return
 	}
 	redirectToFrontendCallback(c, frontendCallback)
+}
+
+func oidcSubjectSignupAllowed(cfg config.OIDCConnectConfig, email string, localEmailVerification, forceEmail, invitationRequired bool) bool {
+	return cfg.ValidateIDToken && !cfg.RequireEmailVerified && strings.TrimSpace(email) == "" &&
+		!localEmailVerification && !forceEmail && !invitationRequired
 }
 
 func (h *AuthHandler) findOIDCCompatEmailUser(ctx context.Context, email string) (*dbent.User, error) {

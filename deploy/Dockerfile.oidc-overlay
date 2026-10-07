@@ -1,0 +1,3 @@
+# Overlay only a backend binary built from the same deployed upstream revision.
+FROM weishaw/sub2api@sha256:f0534541ab9a510b0d190e3fe25288b6b82fdcaea905634c38660c43fab1ff08
+COPY --chmod=755 sub2api /app/sub2api
