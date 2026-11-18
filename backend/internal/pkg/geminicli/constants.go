@@ -46,6 +46,6 @@ const (
 
 	SessionTTL = 30 * time.Minute
 
-	// GeminiCLIUserAgent mimics Gemini CLI to maximize compatibility with internal endpoints.
-	GeminiCLIUserAgent = "GeminiCLI/0.1.5 (Windows; AMD64)"
+	// GeminiCLIUserAgent mimics Gemini CLI 0.68.0 (format: GeminiCLI/<version>/<model> (<platform>; <arch>; <surface>)).
+	GeminiCLIUserAgent = "GeminiCLI/0.68.0/gemini-3.8-flash (win32; x64; terminal)"
 )
